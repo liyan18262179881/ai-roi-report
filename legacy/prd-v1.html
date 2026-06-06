@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI ROI 测算与方案生成器 · MVP PRD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1C1A;
+  --ink-soft:#4A4E4A;
+  --ink-faint:#7C817C;
+  --paper:#F7F5EF;
+  --paper-card:#FFFFFF;
+  --line:#E2DFD6;
+  --line-soft:#EDEBE3;
+  --accent:#0F6E56;
+  --accent-soft:#E1F5EE;
+  --accent-ink:#085041;
+  --boss:#185FA5;
+  --boss-soft:#E6F1FB;
+  --boss-ink:#0C447C;
+  --vendor:#9A4A1B;
+  --vendor-soft:#FAECE7;
+  --vendor-ink:#712B13;
+  --warn-soft:#FAEEDA;
+  --warn-ink:#633806;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Sora',-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.7;
+  font-size:15px;
+  -webkit-font-smoothing:antialiased;
+}
+.layout{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{
+  width:272px;flex-shrink:0;
+  background:var(--ink);
+  color:#D8D6CC;
+  position:sticky;top:0;height:100vh;
+  overflow-y:auto;
+  padding:32px 0;
+}
+.brand{padding:0 28px 28px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.brand .kicker{font-family:var(--mono);font-size:11px;letter-spacing:0.18em;color:#7FB8A6;text-transform:uppercase;margin-bottom:10px}
+.brand h1{font-size:19px;font-weight:600;color:#fff;line-height:1.35;letter-spacing:-0.01em}
+.brand .ver{font-family:var(--mono);font-size:11px;color:#7C817C;margin-top:10px}
+.nav{padding:20px 0}
+.nav a{
+  display:flex;align-items:baseline;gap:12px;
+  padding:9px 28px;
+  color:#A8A69C;text-decoration:none;font-size:14px;
+  border-left:2px solid transparent;
+  transition:all .15s;
+}
+.nav a:hover{color:#fff;background:rgba(255,255,255,0.04)}
+.nav a.active{color:#fff;border-left-color:var(--accent);background:rgba(15,110,86,0.14)}
+.nav a .n{font-family:var(--mono);font-size:11px;color:#6FA593;min-width:18px}
+.nav a.active .n{color:#7FB8A6}
+.sidebar-foot{padding:20px 28px 0;font-size:11px;color:#6B6F6B;line-height:1.6;border-top:1px solid rgba(255,255,255,0.08);margin-top:8px}
+
+/* Main */
+.main{flex:1;min-width:0}
+.content{max-width:820px;margin:0 auto;padding:64px 56px 120px}
+section{display:none;animation:fade .35s ease}
+section.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.sec-head{margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.sec-head .num{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:0.12em;margin-bottom:12px}
+.sec-head h2{font-size:30px;font-weight:600;letter-spacing:-0.02em;line-height:1.25}
+.sec-head .sub{color:var(--ink-soft);margin-top:12px;font-size:15px}
+
+h3{font-size:18px;font-weight:600;margin:40px 0 16px;letter-spacing:-0.01em;display:flex;align-items:center;gap:10px}
+h3 .bar{width:4px;height:18px;background:var(--accent);border-radius:2px}
+h4{font-size:15px;font-weight:600;margin:24px 0 10px;color:var(--ink)}
+p{margin:12px 0;color:var(--ink-soft)}
+strong{color:var(--ink);font-weight:600}
+.lead{font-size:16px;color:var(--ink);line-height:1.75}
+
+.card{background:var(--paper-card);border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin:18px 0}
+.card-tight{padding:18px 22px}
+
+.kvgrid{display:grid;grid-template-columns:130px 1fr;gap:0;margin:18px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper-card)}
+.kvgrid .k{padding:13px 18px;font-size:13px;color:var(--ink-faint);background:var(--line-soft);border-bottom:1px solid var(--line);font-family:var(--mono)}
+.kvgrid .v{padding:13px 18px;font-size:14px;color:var(--ink);border-bottom:1px solid var(--line)}
+.kvgrid .k:last-of-type,.kvgrid .v:last-of-type{border-bottom:none}
+
+ul.clean{list-style:none;margin:14px 0}
+ul.clean li{padding:8px 0 8px 26px;position:relative;color:var(--ink-soft)}
+ul.clean li::before{content:'';position:absolute;left:6px;top:16px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+ol.steps{list-style:none;counter-reset:s;margin:16px 0}
+ol.steps li{counter-increment:s;padding:10px 0 10px 42px;position:relative;color:var(--ink-soft);border-bottom:1px dashed var(--line-soft)}
+ol.steps li:last-child{border-bottom:none}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:9px;width:26px;height:26px;background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:500;padding:3px 9px;border-radius:6px;letter-spacing:0.02em}
+.tag-boss{background:var(--boss-soft);color:var(--boss-ink)}
+.tag-vendor{background:var(--vendor-soft);color:var(--vendor-ink)}
+.tag-acc{background:var(--accent-soft);color:var(--accent-ink)}
+.tag-warn{background:var(--warn-soft);color:var(--warn-ink)}
+.tag-mute{background:var(--line-soft);color:var(--ink-faint)}
+
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;background:var(--paper-card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th{text-align:left;padding:12px 16px;background:var(--line-soft);font-weight:600;font-size:13px;color:var(--ink);border-bottom:1px solid var(--line)}
+td{padding:12px 16px;border-bottom:1px solid var(--line-soft);color:var(--ink-soft);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td .mono,th .mono{font-family:var(--mono)}
+
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0}
+.callout.warn{border-left-color:var(--vendor);background:var(--warn-soft)}
+.callout .ct{font-weight:600;color:var(--accent-ink);margin-bottom:4px;font-size:14px}
+.callout.warn .ct{color:var(--warn-ink)}
+.callout p{margin:4px 0 0;color:var(--ink-soft);font-size:14px}
+
+.flow{display:flex;flex-direction:column;gap:0;margin:24px 0}
+.flow-step{display:flex;gap:18px;align-items:flex-start;position:relative;padding-bottom:24px}
+.flow-step::before{content:'';position:absolute;left:21px;top:44px;bottom:0;width:2px;background:var(--line)}
+.flow-step:last-child::before{display:none}
+.flow-dot{width:44px;height:44px;border-radius:12px;background:var(--paper-card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:var(--accent);flex-shrink:0;font-size:15px;z-index:1}
+.flow-body{padding-top:3px}
+.flow-body .ft{font-weight:600;font-size:15px}
+.flow-body .fd{color:var(--ink-faint);font-size:13.5px;margin-top:3px}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+.report-card{border-radius:14px;padding:22px 24px;border:1px solid var(--line)}
+.report-card.boss{background:var(--boss-soft);border-color:#B5D4F4}
+.report-card.vendor{background:var(--vendor-soft);border-color:#F0997B}
+.report-card h4{margin-top:0;display:flex;align-items:center;gap:8px}
+.report-card.boss h4{color:var(--boss-ink)}
+.report-card.vendor h4{color:var(--vendor-ink)}
+.report-card ul{list-style:none;margin:12px 0 0}
+.report-card li{padding:6px 0 6px 22px;position:relative;font-size:13.5px;color:var(--ink-soft)}
+.report-card li::before{content:'✓';position:absolute;left:0;font-family:var(--mono);font-size:12px}
+.report-card.boss li::before{color:var(--boss)}
+.report-card.vendor li::before{color:var(--vendor)}
+.report-card .no li::before{content:'✕';color:var(--ink-faint)}
+
+/* Prototype */
+.proto{background:var(--paper-card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin:24px 0;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.proto-bar{background:var(--line-soft);padding:10px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.proto-bar .dot{width:10px;height:10px;border-radius:50%;background:#CFCBBF}
+.proto-bar .url{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-left:8px}
+.proto-body{padding:26px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:6px;font-weight:500}
+.field .hint{color:var(--ink-faint);font-weight:400;font-size:12px;margin-left:4px}
+.field-row{display:flex;align-items:center;gap:10px}
+.field input{
+  flex:1;padding:10px 12px;font-size:14px;font-family:var(--mono);
+  border:1px solid var(--line);border-radius:9px;background:var(--paper);
+  color:var(--ink);transition:border .15s;width:100%;
+}
+.field input:focus{outline:none;border-color:var(--accent);background:#fff}
+.field .unit{font-size:12px;color:var(--ink-faint);min-width:42px;font-family:var(--mono)}
+.proto-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.proto-grid{grid-template-columns:1fr}}
+.scene-pills{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 22px}
+.scene-pill{padding:9px 14px;border-radius:10px;border:1px solid var(--line);font-size:13px;cursor:pointer;background:var(--paper);transition:all .15s;display:flex;align-items:center;gap:6px}
+.scene-pill.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.scene-pill.soon{color:var(--ink-faint);cursor:default}
+.scene-pill .badge{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:4px;background:var(--warn-soft);color:var(--warn-ink)}
+.gen-btn{width:100%;margin-top:6px;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:11px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
+.gen-btn:hover{background:#0C5A47}
+
+.result{margin-top:8px}
+.result-toggle{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:18px}
+.result-toggle button{flex:1;padding:11px;border:none;background:var(--paper);font-family:var(--sans);font-size:13.5px;font-weight:500;color:var(--ink-soft);cursor:pointer;transition:all .15s}
+.result-toggle button.on{background:var(--ink);color:#fff}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+.metric{background:var(--paper);border-radius:11px;padding:16px;border:1px solid var(--line-soft)}
+.metric .ml{font-size:12px;color:var(--ink-faint)}
+.metric .mv{font-size:26px;font-weight:700;font-family:var(--mono);margin-top:4px;letter-spacing:-0.02em}
+.metric .mv.green{color:var(--accent)}
+.metric .mv.blue{color:var(--boss)}
+.rep-block{border-top:1px solid var(--line-soft);padding-top:16px;margin-top:4px}
+.rep-block h5{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:10px;font-family:var(--mono);letter-spacing:0.02em}
+.rep-line{display:flex;justify-content:space-between;padding:7px 0;font-size:13.5px;border-bottom:1px dashed var(--line-soft)}
+.rep-line:last-child{border-bottom:none}
+.rep-line .rk{color:var(--ink-soft)}
+.rep-line .rv{font-family:var(--mono);color:var(--ink);font-weight:500}
+.week-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line-soft);font-size:13px}
+.week-row:last-child{border-bottom:none}
+.week-row .wk{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:54px;padding-top:1px}
+.week-row .wt{color:var(--ink-soft)}
+.hidden{display:none}
+
+.metrics-target{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:18px 0}
+.mt-card{background:var(--paper-card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.mt-card .mtl{font-size:13px;color:var(--ink-faint)}
+.mt-card .mtv{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--accent);margin-top:4px}
+.mt-card .mtd{font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.5}
+
+.footer-note{margin-top:60px;padding-top:24px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-faint);font-family:var(--mono);line-height:1.7}
+
+.mobile-nav{display:none}
+@media(max-width:900px){
+  .sidebar{display:none}
+  .content{padding:32px 22px 100px}
+  .mobile-nav{display:flex;gap:8px;overflow-x:auto;padding:14px;background:var(--ink);position:sticky;top:0;z-index:10}
+  .mobile-nav a{white-space:nowrap;color:#A8A69C;text-decoration:none;font-size:13px;padding:6px 12px;border-radius:8px}
+  .mobile-nav a.active{background:rgba(15,110,86,0.3);color:#fff}
+  .sec-head h2{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="kicker">Product Requirements</div>
+      <h1>AI ROI 测算与<br>方案生成器</h1>
+      <div class="ver">MVP v0.1 · 工作名「算得清」</div>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="#" data-s="overview" class="active"><span class="n">00</span>产品概述</a>
+      <a href="#" data-s="users"><span class="n">01</span>用户与场景</a>
+      <a href="#" data-s="flow"><span class="n">02</span>核心流程</a>
+      <a href="#" data-s="proto"><span class="n">03</span>交互原型</a>
+      <a href="#" data-s="fields"><span class="n">04</span>页面与字段</a>
+      <a href="#" data-s="roi"><span class="n">05</span>ROI 计算逻辑</a>
+      <a href="#" data-s="reports"><span class="n">06</span>双版本报告</a>
+      <a href="#" data-s="tech"><span class="n">07</span>技术建议</a>
+      <a href="#" data-s="metrics"><span class="n">08</span>验证指标</a>
+      <a href="#" data-s="scope"><span class="n">09</span>范围边界</a>
+    </nav>
+    <div class="sidebar-foot">
+      面向中小企业的 AI 项目可行性评估工具。<br>从零起步 · 工具+服务模式。
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="mobile-nav" id="mnav">
+      <a href="#" data-s="overview" class="active">概述</a>
+      <a href="#" data-s="users">用户场景</a>
+      <a href="#" data-s="flow">流程</a>
+      <a href="#" data-s="proto">原型</a>
+      <a href="#" data-s="fields">字段</a>
+      <a href="#" data-s="roi">计算</a>
+      <a href="#" data-s="reports">报告</a>
+      <a href="#" data-s="tech">技术</a>
+      <a href="#" data-s="metrics">指标</a>
+      <a href="#" data-s="scope">边界</a>
+    </div>
+    <div class="content">
+
+    <!-- 00 OVERVIEW -->
+    <section id="overview" class="active">
+      <div class="sec-head">
+        <div class="num">00 / OVERVIEW</div>
+        <h2>产品概述</h2>
+        <p class="sub">一句话:帮中小企业在投钱做 AI 之前,先算清楚值不值、怎么做、要花多少、多久回本。</p>
+      </div>
+
+      <p class="lead">这是一个<strong>自助式网页工具</strong>。企业主或业务负责人打开链接,选择一个业务场景、填入自己公司的真实数字,当场就能看到一份 ROI 测算结果和落地方案,并生成两份可交付报告——一份给老板做决策,一份给乙方(我们)做报价与施工。</p>
+
+      <h3><span class="bar"></span>要解决的真实问题</h3>
+      <p>中小企业老板都听说过"AI 能提效",但卡在两个地方下不了决心:第一,<strong>不知道值不值</strong>——投进去的钱多久能赚回来没人给得出数字;第二,<strong>不知道找谁靠谱</strong>——市面上的 AI 服务商说得天花乱坠,但拿不出针对自己公司的具体测算。这个工具把模糊的"AI 提效"变成一份带具体数字的决策依据。</p>
+
+      <h3><span class="bar"></span>MVP 要验证的核心假设</h3>
+      <div class="callout">
+        <div class="ct">核心假设</div>
+        <p>「一份针对企业真实情况、数字精准的 ROI 评估报告,能不能打动企业、促成它愿意为后续的 AI 落地服务付费?」</p>
+      </div>
+      <p>注意:MVP 验证的不是"哪个场景最热门",而是"这套<strong>质量</strong>能不能带来成交"。对一个从零起步、靠信任和案例破局的团队来说,拿到第一个付费客户和第一个真实案例,比覆盖面广更重要。</p>
+
+      <h3><span class="bar"></span>关键设计决策(已确认)</h3>
+      <div class="kvgrid">
+        <div class="k">形态</div><div class="v">自助式网页,企业自己填、当场出报告(全程数据可追踪)</div>
+        <div class="k">核心闭环</div><div class="v">填数据 + 选场景 → ROI 测算 → 落地方案 → 双版本报告</div>
+        <div class="k">MVP 范围</div><div class="v">电商内容生产场景「做透」,其余 3 场景做「即将上线」入口收集需求</div>
+        <div class="k">价值公式</div><div class="v">省人力成本 + 产能翻倍,两个角度都算、同时展示,老板自己选角度</div>
+        <div class="k">双报告</div><div class="v">老板版(投入/人员/周期/回本)+ 乙方版(每周任务/技术选型/Agent方案)</div>
+      </div>
+
+      <h3><span class="bar"></span>成功标准</h3>
+      <ul class="clean">
+        <li>找到 5 个真实企业完整填完数据并查看报告</li>
+        <li>其中至少 1 家在看完报告后留资 / 主动询问落地服务</li>
+        <li>拿到第一个可以对外讲的真实案例(哪个行业、省了多少、多久回本)</li>
+      </ul>
+    </section>
+
+    <!-- 01 USERS -->
+    <section id="users">
+      <div class="sec-head">
+        <div class="num">01 / USERS & SCENES</div>
+        <h2>用户与场景</h2>
+        <p class="sub">谁在用、用来做什么决定,以及为什么场景只做一个深、其余做入口。</p>
+      </div>
+
+      <h3><span class="bar"></span>两类核心用户</h3>
+      <table>
+        <tr><th style="width:130px">用户</th><th>诉求</th><th>对应产出</th></tr>
+        <tr><td><strong>企业老板 / 老总</strong></td><td>这事值不值得做?投多少、几个人、多久回本?</td><td><span class="tag tag-boss">老板版报告</span></td></tr>
+        <tr><td><strong>我们(乙方)</strong></td><td>怎么报价、怎么交付、技术怎么选、智能体怎么搭?</td><td><span class="tag tag-vendor">乙方版报告</span></td></tr>
+      </table>
+      <p>同一套输入,切出两种视角。<strong>老板版帮客户做决策、促成成交;乙方版帮我们自己定价、保证利润。</strong>这是产品设计上一个聪明的杠杆。</p>
+
+      <h3><span class="bar"></span>四个场景,为什么只做透一个</h3>
+      <p>四个场景的计算<strong>骨架相通</strong>(都是「价值 ÷ 投入 = ROI」),但每个场景具体问什么数、用什么公式、调什么 AI、耗多少 token 完全不同——本质是四套独立的「场景引擎」。MVP 阶段不可能四套都做准,所以:</p>
+      <table>
+        <tr><th style="width:150px">场景</th><th>MVP 状态</th><th>说明</th></tr>
+        <tr><td><strong>电商内容生产</strong><br><span style="font-size:12px;color:var(--ink-faint)">图文 / 详情页 / 素材</span></td><td><span class="tag tag-acc">做透</span></td><td>字段、公式、token 估算都做准。你最懂,参数最有把握。</td></tr>
+        <tr><td>客服机器人</td><td><span class="tag tag-warn">即将上线</span></td><td>入口可点,点进去显示「评估中,留资优先体验」</td></tr>
+        <tr><td>内部知识库</td><td><span class="tag tag-warn">即将上线</span></td><td>同上</td></tr>
+        <tr><td>销售助手</td><td><span class="tag tag-warn">即将上线</span></td><td>同上(注意:此场景是「增收」逻辑,非省钱)</td></tr>
+      </table>
+      <div class="callout">
+        <div class="ct">「即将上线」不是占位,是情报采集</div>
+        <p>通过统计哪个「即将上线」场景被点击 / 留资最多,你能用近乎零成本拿到「哪个场景需求最大」的真实信号,直接指导下一个做哪个。等于用「做透一个」的成本,顺手拿到「做浅四个」的核心情报。</p>
+      </div>
+    </section>
+
+    <!-- 02 FLOW -->
+    <section id="flow">
+      <div class="sec-head">
+        <div class="num">02 / CORE FLOW</div>
+        <h2>核心流程</h2>
+        <p class="sub">从打开链接到拿到报告,企业要走的完整路径。</p>
+      </div>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-dot">1</div><div class="flow-body"><div class="ft">落地页</div><div class="fd">一句话价值主张 + 「1 分钟算出你的 AI 账」按钮。无需注册登录。</div></div></div>
+        <div class="flow-step"><div class="flow-dot">2</div><div class="flow-body"><div class="ft">选择场景</div><div class="fd">四个场景卡片。电商内容可进入;其余三个标「即将上线」,点击触发留资。</div></div></div>
+        <div class="flow-step"><div class="flow-dot">3</div><div class="flow-body"><div class="ft">填写数据</div><div class="fd">5–7 个老板能随口说出的数字(人数、薪资、日产量、提升倍数等)。带默认值降低门槛。</div></div></div>
+        <div class="flow-step"><div class="flow-dot">4</div><div class="flow-body"><div class="ft">实时 ROI 测算</div><div class="fd">填完即算:月省/增收、年度价值、总投入、回本周期。数字随输入实时变化。</div></div></div>
+        <div class="flow-step"><div class="flow-dot">5</div><div class="flow-body"><div class="ft">查看落地方案</div><div class="fd">三阶段路线图 + 人员配置 + 周期投入。老板看投入回报,乙方看施工细节。</div></div></div>
+        <div class="flow-step"><div class="flow-dot">6</div><div class="flow-body"><div class="ft">生成 / 下载报告 → 留资</div><div class="fd">在线查看双版本报告;下载 PDF 或获取完整版前留下联系方式(转化点)。</div></div></div>
+      </div>
+      <div class="callout">
+        <div class="ct">设计要点:门槛前置最低,价值尽早出现</div>
+        <p>第 3 步是整个漏斗最大的流失点。中小企业老板最怕「让我填一堆我不知道的数字」。所以字段要少、要有默认值、每个字段一句话解释从哪查。理想情况是填到第 2、3 个字段时,结果区就开始显示数字了——让人「上瘾」继续填。</p>
+      </div>
+    </section>
+
+    <!-- 03 PROTOTYPE -->
+    <section id="proto">
+      <div class="sec-head">
+        <div class="num">03 / INTERACTIVE PROTOTYPE</div>
+        <h2>交互原型</h2>
+        <p class="sub">下面是电商内容场景的可操作原型。改任意数字,下方双版本报告会实时重算。</p>
+      </div>
+
+      <div class="scene-pills">
+        <div class="scene-pill on"><i>●</i> 电商内容生产</div>
+        <div class="scene-pill soon">客服机器人 <span class="badge">即将上线</span></div>
+        <div class="scene-pill soon">内部知识库 <span class="badge">即将上线</span></div>
+        <div class="scene-pill soon">销售助手 <span class="badge">即将上线</span></div>
+      </div>
+
+      <div class="proto">
+        <div class="proto-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">suandeqing.app / 电商内容 / 测算</span></div>
+        <div class="proto-body">
+          <div class="proto-grid">
+            <div class="field"><label>内容团队人数 <span class="hint">设计+文案</span></label><div class="field-row"><input id="i_team" type="number" value="8"><span class="unit">人</span></div></div>
+            <div class="field"><label>人均月薪 <span class="hint">含五险一金前</span></label><div class="field-row"><input id="i_salary" type="number" value="8000"><span class="unit">元</span></div></div>
+            <div class="field"><label>日均内容产出 <span class="hint">图/篇</span></label><div class="field-row"><input id="i_output" type="number" value="80"><span class="unit">件</span></div></div>
+            <div class="field"><label>单件平均耗时</label><div class="field-row"><input id="i_time" type="number" value="35"><span class="unit">分钟</span></div></div>
+            <div class="field"><label>AI 辅助后产能提升 <span class="hint">保守取 2–3</span></label><div class="field-row"><input id="i_boost" type="number" value="3" step="0.5"><span class="unit">倍</span></div></div>
+            <div class="field"><label>运营平台数 <span class="hint">淘宝/抖音/拼多多…</span></label><div class="field-row"><input id="i_platforms" type="number" value="3"><span class="unit">个</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result">
+        <div class="result-toggle">
+          <button id="tab_boss" class="on" onclick="setTab('boss')">老板版 · 看投入回报</button>
+          <button id="tab_vendor" onclick="setTab('vendor')">乙方版 · 看施工方案</button>
+        </div>
+
+        <!-- BOSS VIEW -->
+        <div id="view_boss">
+          <div class="metrics">
+            <div class="metric"><div class="ml">每月可省人力成本</div><div class="mv green" id="m_save">—</div></div>
+            <div class="metric"><div class="ml">等效产能扩编</div><div class="mv blue" id="m_capacity">—</div></div>
+            <div class="metric"><div class="ml">总投入(首年)</div><div class="mv" id="m_invest">—</div></div>
+            <div class="metric"><div class="ml">投资回收周期</div><div class="mv green" id="m_payback">—</div></div>
+          </div>
+          <div class="proto" style="margin-top:0">
+            <div class="proto-body">
+              <div class="rep-block" style="border-top:none;padding-top:0">
+                <h5>角度一 · 降本(省人力)</h5>
+                <div class="rep-line"><span class="rk">AI 接管后,等效可精简</span><span class="rv" id="b_people">—</span></div>
+                <div class="rep-line"><span class="rk">每月节省人力成本</span><span class="rv" id="b_save">—</span></div>
+                <div class="rep-line"><span class="rk">折合全年</span><span class="rv" id="b_save_year">—</span></div>
+              </div>
+              <div class="rep-block">
+                <h5>角度二 · 增效(产能翻倍)</h5>
+                <div class="rep-line"><span class="rk">同样团队,日产能从</span><span class="rv" id="b_cap">—</span></div>
+                <div class="rep-line"><span class="rk">等于白赚的产出</span><span class="rv" id="b_cap_eq">—</span></div>
+              </div>
+              <div class="rep-block">
+                <h5>投入与回报节奏</h5>
+                <div class="rep-line"><span class="rk">前期建设(1–2 月)</span><span class="rv" id="b_pre">—</span></div>
+                <div class="rep-line"><span class="rk">中期开发(2–3 月)</span><span class="rv" id="b_mid">—</span></div>
+                <div class="rep-line"><span class="rk">后期运维(每月)</span><span class="rv" id="b_post">—</span></div>
+                <div class="rep-line"><span class="rk">需公司投入人力</span><span class="rv" id="b_hr">—</span></div>
+                <div class="rep-line"><span class="rk">预计回本</span><span class="rv" id="b_pay2">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VENDOR VIEW -->
+        <div id="view_vendor" class="hidden">
+          <div class="metrics">
+            <div class="metric"><div class="ml">月 API / Token 成本</div><div class="mv" id="v_api">—</div></div>
+            <div class="metric"><div class="ml">月产内容量</div><div class="mv" id="v_volume">—</div></div>
+            <div class="metric"><div class="ml">项目报价区间</div><div class="mv blue" id="v_quote">—</div></div>
+            <div class="metric"><div class="ml">毛利估算</div><div class="mv green" id="v_margin">—</div></div>
+          </div>
+          <div class="proto" style="margin-top:0">
+            <div class="proto-body">
+              <div class="rep-block" style="border-top:none;padding-top:0">
+                <h5>技术选型(MVP 方案)</h5>
+                <div class="rep-line"><span class="rk">文案生成</span><span class="rv">Claude / 通义 · 提示词库</span></div>
+                <div class="rep-line"><span class="rk">图片生成</span><span class="rv">SD / 即梦 · LoRA 风格锁定</span></div>
+                <div class="rep-line"><span class="rk">编排</span><span class="rv">Agent 工作流(SKU→文案→图→质检)</span></div>
+                <div class="rep-line"><span class="rk">审核</span><span class="rv">AI 产出 + 人工把关</span></div>
+              </div>
+              <div class="rep-block">
+                <h5>Token 成本拆解(月)</h5>
+                <div class="rep-line"><span class="rk">文案 token(输入+输出)</span><span class="rv" id="v_text">—</span></div>
+                <div class="rep-line"><span class="rk">图片生成调用</span><span class="rv" id="v_img">—</span></div>
+                <div class="rep-line"><span class="rk">合计 API 成本</span><span class="rv" id="v_api2">—</span></div>
+              </div>
+              <div class="rep-block">
+                <h5>交付排期(每周任务)</h5>
+                <div class="week-row"><span class="wk">W1</span><span class="wt">需求梳理:盘点 SKU 类目、现有内容模板与风格基线</span></div>
+                <div class="week-row"><span class="wk">W2</span><span class="wt">搭建提示词库 + 图片风格 LoRA,跑通单条内容生成</span></div>
+                <div class="week-row"><span class="wk">W3–4</span><span class="wt">搭 Agent 编排流程:SKU 输入 → 文案 → 配图 → 质检输出</span></div>
+                <div class="week-row"><span class="wk">W5</span><span class="wt">接入多平台格式适配 + 批量生产测试</span></div>
+                <div class="week-row"><span class="wk">W6</span><span class="wt">人工审核流程 + 数据看板上线,交付培训</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="callout">
+        <div class="ct">原型说明</div>
+        <p>以上数字由你输入的参数实时计算,公式与系数见下一节「ROI 计算逻辑」。所有系数都标注为可调,正式版应让你能在后台改这些行业基准值。</p>
+      </div>
+    </section>
+
+    <!-- 04 FIELDS -->
+    <section id="fields">
+      <div class="sec-head">
+        <div class="num">04 / PAGES & FIELDS</div>
+        <h2>页面与字段</h2>
+        <p class="sub">MVP 需要的页面,以及电商内容场景的完整输入字段定义。</p>
+      </div>
+
+      <h3><span class="bar"></span>页面清单</h3>
+      <table>
+        <tr><th style="width:70px">页面</th><th>内容</th><th>关键</th></tr>
+        <tr><td><span class="mono">P1</span></td><td>落地页</td><td>价值主张 + CTA,无注册</td></tr>
+        <tr><td><span class="mono">P2</span></td><td>场景选择</td><td>1 可进 + 3 即将上线(留资)</td></tr>
+        <tr><td><span class="mono">P3</span></td><td>数据录入(电商内容)</td><td>5–7 字段,带默认值与提示</td></tr>
+        <tr><td><span class="mono">P4</span></td><td>结果与方案</td><td>双视角切换,实时计算</td></tr>
+        <tr><td><span class="mono">P5</span></td><td>留资 / 下载</td><td>转化点,埋点重点</td></tr>
+      </table>
+
+      <h3><span class="bar"></span>电商内容场景 · 输入字段</h3>
+      <table>
+        <tr><th>字段</th><th>类型</th><th>默认</th><th>说明</th></tr>
+        <tr><td>内容团队人数</td><td class="mono">数字</td><td class="mono">8</td><td>设计 + 文案,直接关联省人力测算</td></tr>
+        <tr><td>人均月薪</td><td class="mono">数字</td><td class="mono">8000</td><td>用于折算人力成本(系统再 ×1.3 含社保)</td></tr>
+        <tr><td>日均内容产出</td><td class="mono">数字</td><td class="mono">80</td><td>图 / 篇,关联产能与 token 成本</td></tr>
+        <tr><td>单件平均耗时</td><td class="mono">数字</td><td class="mono">35</td><td>分钟,用于换算节省的工时</td></tr>
+        <tr><td>AI 产能提升倍数</td><td class="mono">数字</td><td class="mono">3</td><td>保守取 2–3,可解释「为什么是这个数」</td></tr>
+        <tr><td>运营平台数</td><td class="mono">数字</td><td class="mono">3</td><td>影响适配工作量与内容变体数</td></tr>
+      </table>
+      <div class="callout warn">
+        <div class="ct">字段克制原则</div>
+        <p>MVP 阶段宁可少问、用合理默认值,也不要因为追求精度把字段堆到 15 个——填写完成率比测算精度更重要。「精度」可以放到留资后由你人工跟进时补全。</p>
+      </div>
+    </section>
+
+    <!-- 05 ROI -->
+    <section id="roi">
+      <div class="sec-head">
+        <div class="num">05 / CALCULATION LOGIC</div>
+        <h2>ROI 计算逻辑</h2>
+        <p class="sub">电商内容场景的公式定义。所有系数都应可在后台配置。</p>
+      </div>
+
+      <h3><span class="bar"></span>角度一:省人力成本</h3>
+      <div class="card card-tight">
+        <p style="font-family:var(--mono);font-size:13px;color:var(--ink);margin:6px 0">可精简人数 = 团队人数 × (1 − 1 / 提升倍数)</p>
+        <p style="font-family:var(--mono);font-size:13px;color:var(--ink);margin:6px 0">月省成本 = 可精简人数 × 人均月薪 × 1.3</p>
+      </div>
+      <p style="font-size:13.5px">举例:8 人团队、提升 3 倍 → 可精简 8×(1−1/3)≈5.3 人;月薪 8000 → 月省 ≈ 5.3×8000×1.3 ≈ <strong>5.5 万</strong>。系数 1.3 表示社保公积金等综合用工成本。</p>
+
+      <h3><span class="bar"></span>角度二:产能翻倍</h3>
+      <div class="card card-tight">
+        <p style="font-family:var(--mono);font-size:13px;color:var(--ink);margin:6px 0">新日产能 = 日产出 × 提升倍数</p>
+        <p style="font-family:var(--mono);font-size:13px;color:var(--ink);margin:6px 0">等效新增产出 = 日产出 × (提升倍数 − 1) × 30(天)</p>
+      </div>
+      <p style="font-size:13.5px">同样的人,日产能从 80 → 240 件,等于每月白赚约 4800 件产出。这个角度对「想扩张但不想加人」的老板更有吸引力。</p>
+
+      <h3><span class="bar"></span>Token / API 成本估算</h3>
+      <table>
+        <tr><th>项目</th><th>单价假设(可调)</th><th>月成本公式</th></tr>
+        <tr><td>文案生成</td><td class="mono">~0.02 元 / 件</td><td class="mono">月产量 × 0.02</td></tr>
+        <tr><td>图片生成</td><td class="mono">~0.15 元 / 张</td><td class="mono">月产量 × 0.15</td></tr>
+        <tr><td>平台适配变体</td><td class="mono">× 平台数系数</td><td class="mono">基础成本 × (1 + 0.2 ×(平台数−1))</td></tr>
+      </table>
+      <p style="font-size:13.5px">月产量 = 日产出 × 30。单价为示意值,正式版需用真实模型计费(输入/输出 token 分别计价)+ 图片接口报价校准。</p>
+
+      <h3><span class="bar"></span>投入拆解与回本</h3>
+      <div class="kvgrid">
+        <div class="k">前期</div><div class="v">基础建设(提示词库 / 风格 / 接入)≈ 2 万,1–2 月</div>
+        <div class="k">中期</div><div class="v">Agent 流程开发 + 集成测试 ≈ 4.5 万,2–3 月</div>
+        <div class="k">后期</div><div class="v">月 API 成本 + 维护迭代(经常性)</div>
+        <div class="k">回本周期</div><div class="v">总投入 ÷ 月净收益(月省成本 − 月运维),向上取整为月数</div>
+      </div>
+    </section>
+
+    <!-- 06 REPORTS -->
+    <section id="reports">
+      <div class="sec-head">
+        <div class="num">06 / DUAL REPORTS</div>
+        <h2>双版本报告</h2>
+        <p class="sub">同一套输入,两份产出。边界严格区分:老板不看技术,乙方要看施工。</p>
+      </div>
+      <div class="two">
+        <div class="report-card boss">
+          <h4><span class="tag tag-boss">老板版</span> 看投入回报</h4>
+          <p style="font-size:13px;color:var(--boss-ink);margin:6px 0 0">目标:帮老板判断「值不值得做」,语言简单、有说服力。</p>
+          <ul>
+            <li>每月可省 / 增收金额(双角度)</li>
+            <li>总投入与三阶段节奏</li>
+            <li>本公司需投入的人员配置</li>
+            <li>每个周期要花多少钱</li>
+            <li>多久回本 / 年度 ROI</li>
+          </ul>
+          <ul class="no" style="margin-top:6px">
+            <li style="color:var(--ink-faint)">不含技术选型(老板不关心)</li>
+          </ul>
+        </div>
+        <div class="report-card vendor">
+          <h4><span class="tag tag-vendor">乙方版</span> 看施工方案</h4>
+          <p style="font-size:13px;color:var(--vendor-ink);margin:6px 0 0">目标:作为你报价和交付的施工图,要细。</p>
+          <ul>
+            <li>每周任务拆解(排期表)</li>
+            <li>技术选型(模型 / 框架 / 工具)</li>
+            <li>Agent / 智能体方案设计</li>
+            <li>Token 成本拆解</li>
+            <li>项目报价区间与毛利估算</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout">
+        <div class="ct">本质</div>
+        <p>老板关心「投入产出和节奏」,乙方关心「怎么施工」。同一个项目计划,两种视角切出来。这两份报告共用一套计算内核,只是展示层不同——开发上不增加计算逻辑,只多一套渲染模板。</p>
+      </div>
+    </section>
+
+    <!-- 07 TECH -->
+    <section id="tech">
+      <div class="sec-head">
+        <div class="num">07 / TECH</div>
+        <h2>技术建议</h2>
+        <p class="sub">MVP 越轻越好。能不做后端就不做,目标是 2–3 周出真东西。</p>
+      </div>
+      <table>
+        <tr><th style="width:120px">模块</th><th>MVP 方案</th><th>理由</th></tr>
+        <tr><td>前端</td><td>纯静态网页(可上 Vercel / 国内静态托管)</td><td>无需登录,一个链接就能发给客户</td></tr>
+        <tr><td>计算</td><td>全部前端 JS 完成,无后端</td><td>公式不复杂,前端算完即显示,零服务器成本</td></tr>
+        <tr><td>报告生成</td><td>页面内渲染 + 浏览器打印 / 导出 PDF</td><td>避免做后端文档服务,先验证</td></tr>
+        <tr><td>留资</td><td>表单提交到飞书多维表格 / 问卷 / 邮件</td><td>不建账号体系,人工跟进即可</td></tr>
+        <tr><td>埋点</td><td>简单事件统计(填写完成、报告查看、留资、即将上线点击)</td><td>这是验证假设的数据来源</td></tr>
+        <tr><td>后台系数配置</td><td>MVP 可先写死在代码常量里</td><td>等需要频繁改再做配置界面</td></tr>
+      </table>
+      <div class="callout">
+        <div class="ct">关键取舍</div>
+        <p>MVP 不做账号、不做真实 API 对接执行、不做多场景配置器。整个工具本质是「一个会算账、会出报告的智能表单」。把复杂度全部留给后续真实交付项目,工具本身保持极简。</p>
+      </div>
+    </section>
+
+    <!-- 08 METRICS -->
+    <section id="metrics">
+      <div class="sec-head">
+        <div class="num">08 / METRICS</div>
+        <h2>验证指标</h2>
+        <p class="sub">MVP 上线后只盯这几个数,它们直接回答「核心假设成不成立」。</p>
+      </div>
+      <div class="metrics-target">
+        <div class="mt-card"><div class="mtl">填写完成率</div><div class="mtv">≥ 40%</div><div class="mtd">进入录入页的人中,完整填完的比例。低于此说明字段太多或门槛太高。</div></div>
+        <div class="mt-card"><div class="mtl">报告查看率</div><div class="mtv">≥ 80%</div><div class="mtd">填完的人中查看完整报告的比例。验证「报告本身有没有吸引力」。</div></div>
+        <div class="mt-card"><div class="mtl">留资转化率</div><div class="mtv">≥ 15%</div><div class="mtd">看完报告后留下联系方式的比例。这是「能不能成交」最直接的信号。</div></div>
+        <div class="mt-card"><div class="mtl">场景需求分布</div><div class="mtv">—</div><div class="mtd">三个「即将上线」场景各自被点击 / 留资的次数,决定下一个做哪个。</div></div>
+      </div>
+      <div class="callout">
+        <div class="ct">北极星指标</div>
+        <p>对这个 MVP 来说,唯一真正重要的是:<strong>有没有拿到第一个愿意为落地服务付费的客户。</strong>上面的漏斗指标都是为这个最终目标服务的过程指标。</p>
+      </div>
+    </section>
+
+    <!-- 09 SCOPE -->
+    <section id="scope">
+      <div class="sec-head">
+        <div class="num">09 / SCOPE</div>
+        <h2>范围边界</h2>
+        <p class="sub">明确「不做什么」和「成功后做什么」,防止 MVP 范围蔓延。</p>
+      </div>
+      <h3><span class="bar"></span>MVP 明确不做</h3>
+      <ul class="clean">
+        <li>完全自定义场景 / 自定义公式(让企业自己配)——这是未来,绝不在 MVP</li>
+        <li>四个场景都做深——只做透电商内容,其余做入口</li>
+        <li>账号 / 登录 / 权限体系</li>
+        <li>真实 AI 接口对接与执行(MVP 只测算,不真的生成内容)</li>
+        <li>后台系数可视化配置界面(先写死在代码里)</li>
+      </ul>
+      <h3><span class="bar"></span>验证成功后的下一步</h3>
+      <ol class="steps">
+        <li>根据「即将上线」点击数据,做透需求第二大的场景</li>
+        <li>沉淀第一个真实交付案例,放到落地页做背书</li>
+        <li>把人工跟进的报价 / 交付流程标准化为可复用 SOP</li>
+        <li>开始积累「行业 ROI 数据库」——你真正的长期壁垒</li>
+      </ol>
+      <div class="footer-note">
+        AI ROI 测算与方案生成器 · MVP PRD v0.1<br>
+        工作名「算得清」 · 本文档为可迭代草案,所有数字与系数均为待校准示意值<br>
+        决策依据:自助式网页 · 电商内容做透 · 双版本报告 · 工具+服务商业模式
+      </div>
+    </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const navLinks=document.querySelectorAll('#nav a, #mnav a');
+const sections=document.querySelectorAll('section');
+function show(id){
+  sections.forEach(s=>s.classList.toggle('active',s.id===id));
+  navLinks.forEach(a=>a.classList.toggle('active',a.dataset.s===id));
+  document.querySelector('.main').scrollTo({top:0,behavior:'instant'});
+  window.scrollTo({top:0});
+}
+navLinks.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();show(a.dataset.s);}));
+
+function setTab(t){
+  document.getElementById('tab_boss').classList.toggle('on',t==='boss');
+  document.getElementById('tab_vendor').classList.toggle('on',t==='vendor');
+  document.getElementById('view_boss').classList.toggle('hidden',t!=='boss');
+  document.getElementById('view_vendor').classList.toggle('hidden',t==='vendor');
+}
+
+function money(n){
+  if(n>=10000) return (n/10000).toFixed(1)+'万';
+  return Math.round(n).toLocaleString();
+}
+function gv(id,d){const v=parseFloat(document.getElementById(id).value);return isNaN(v)?d:v;}
+
+function calc(){
+  const team=gv('i_team',8), salary=gv('i_salary',8000), output=gv('i_output',80);
+  const time=gv('i_time',35), boost=gv('i_boost',3), platforms=gv('i_platforms',3);
+
+  const savePeople=team*(1-1/boost);
+  const monthSave=savePeople*salary*1.3;
+  const yearSave=monthSave*12;
+  const newCap=output*boost;
+  const extraCap=output*(boost-1)*30;
+
+  const monthVol=output*30;
+  const textCost=monthVol*0.02;
+  const imgCost=monthVol*0.15;
+  const platformMul=1+0.2*(platforms-1);
+  const apiCost=(textCost+imgCost)*platformMul;
+
+  const pre=20000, mid=45000, post=apiCost+Math.round(monthSave*0.08);
+  const totalInvest=pre+mid+post*12;
+  const monthNet=monthSave-post;
+  const payback=monthNet>0?Math.ceil(totalInvest/monthNet):99;
+  const hrNeeded=Math.max(1,Math.round(team*0.15));
+
+  const quoteLow=mid*0.8, quoteHigh=(pre+mid)*1.4;
+  const deliverCost=(pre+mid)*0.55;
+  const margin=((quoteLow+quoteHigh)/2-deliverCost);
+
+  document.getElementById('m_save').textContent=money(monthSave)+'元';
+  document.getElementById('m_capacity').textContent='+'+Math.round(team*(boost-1))+'人';
+  document.getElementById('m_invest').textContent=money(totalInvest)+'元';
+  document.getElementById('m_payback').textContent=payback<=12?payback+'个月':'1年+';
+
+  document.getElementById('b_people').textContent=savePeople.toFixed(1)+' 人';
+  document.getElementById('b_save').textContent=money(monthSave)+' 元';
+  document.getElementById('b_save_year').textContent=money(yearSave)+' 元';
+  document.getElementById('b_cap').textContent=output+' → '+Math.round(newCap)+' 件/天';
+  document.getElementById('b_cap_eq').textContent='≈ '+money(extraCap)+' 件/月';
+  document.getElementById('b_pre').textContent=money(pre)+' 元';
+  document.getElementById('b_mid').textContent=money(mid)+' 元';
+  document.getElementById('b_post').textContent=money(post)+' 元/月';
+  document.getElementById('b_hr').textContent=hrNeeded+' 人(兼职配合)';
+  document.getElementById('b_pay2').textContent=payback<=12?payback+' 个月':'1 年以上';
+
+  document.getElementById('v_api').textContent=money(apiCost)+'元';
+  document.getElementById('v_volume').textContent=money(monthVol)+'件';
+  document.getElementById('v_quote').textContent=money(quoteLow)+'–'+money(quoteHigh);
+  document.getElementById('v_margin').textContent=money(margin)+'元';
+  document.getElementById('v_text').textContent=money(textCost*platformMul)+' 元';
+  document.getElementById('v_img').textContent=money(imgCost*platformMul)+' 元';
+  document.getElementById('v_api2').textContent=money(apiCost)+' 元/月';
+}
+['i_team','i_salary','i_output','i_time','i_boost','i_platforms'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',calc);
+});
+calc();
+</script>
+</body>
+</html>
