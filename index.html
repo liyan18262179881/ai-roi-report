@@ -55,6 +55,22 @@ body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1
 .pfld input{flex:1;width:100%;padding:9px 10px;font-size:14px;font-family:var(--mono);border:1px solid var(--hair);border-radius:8px;background:var(--soft);color:var(--ink);min-width:0}
 .pfld input:focus{outline:none;border-color:var(--ink)}
 .pfld .u{font-size:11px;color:var(--faint);font-family:var(--mono);min-width:22px}
+/* ── API 成本区 ── */
+.api-box{background:var(--soft);border:1px solid var(--hair2);border-radius:9px;padding:12px 15px;margin-top:14px}
+.api-box-lbl{font-size:10.5px;font-weight:600;color:var(--gray);font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:9px}
+.tier-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.tier-btn{padding:5px 11px;border:1px solid var(--hair);background:var(--paper);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--sans);color:var(--ink2);transition:.12s;white-space:nowrap;line-height:1.4}
+.tier-btn:hover{border-color:var(--gray)}
+.tier-btn.sel{border-color:var(--ink);background:var(--ink);color:#fff}
+.tier-btn.sel .tprice{opacity:0.75}
+.tier-btn .tprice{font-family:var(--mono);font-size:10px;margin-left:3px;color:var(--gray)}
+.price-custom{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--gray);margin-left:auto}
+.price-input{width:66px;padding:4px 7px;font-size:12px;font-family:var(--mono);border:1px solid var(--hair);border-radius:6px;background:var(--paper);color:var(--ink);text-align:right}
+.price-input:focus{outline:none;border-color:var(--ink)}
+.api-model-nm{font-size:11px;color:var(--faint);margin-bottom:6px;min-height:15px}
+.api-live{font-size:12.5px;font-family:var(--mono);padding:6px 9px;min-height:22px;color:var(--gray);background:var(--paper);border-radius:6px;border:1px solid var(--hair2)}
+.api-live strong{color:var(--ink);font-weight:700}
+/* ── end API 成本区 ── */
 .empty-hint{text-align:center;padding:50px 20px;color:var(--faint);font-size:14px;border:1px dashed var(--hair);border-radius:13px}
 .gen-wrap{text-align:center;margin-top:26px}
 .gen-btn{padding:14px 40px;background:var(--ink);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;letter-spacing:0.02em}
@@ -162,7 +178,7 @@ table.rep tr.sum td.r{font-family:var(--mono)}
     <div class="main-inner">
       <div id="config">
         <div class="mode-bar"><span class="mt">② 填写各方向参数</span></div>
-        <p class="section-lead">只填你能说出口的:人数、薪资、业务量。提效系数(产能倍数、AI 处理率等)已按 2026 行业基准设好,报告里会注明,你不用填。没把握的可空着,空的标「待补充」且不计入合计。</p>
+        <p class="section-lead">只填你能说出口的:人数、薪资、业务量。提效系数已按 2026 行业基准设好,报告里会注明。每个方向可选择 AI 模型档位 —— 不同模型 API 成本差异显著,填入业务量后会实时显示月 API 花费估算。没把握的可空着,空的标「待补充」且不计入合计。</p>
         <div id="param_cards"></div>
         <div class="gen-wrap">
           <button class="gen-btn" id="genBtn" onclick="generate()">生成商业计划报告 →</button>
@@ -187,29 +203,59 @@ const SC={
   vis:{icon:'🎨',name:'视觉 / 设计',type:'降本+增效',bench:'按行业基准:AI 出图后产能提升 2.5 倍(2026)。',
     params:[{id:'vis_n',label:'团队人数',u:'人'},{id:'vis_sal',label:'人均月薪',u:'元'},{id:'vis_vol',label:'月出图量',u:'件'}],
     coef:{boost:2.5},
-    deploy:'自建出图编排(ComfyUI / Agent)+ 图片生成 API',model:'通义万相 / 即梦(图)+ qwen(文案)',unit:'件',price:0.10,build:[15000,35000],
+    deploy:'自建出图编排(ComfyUI / Agent)+ 图片生成 API',unit:'件',build:[15000,35000],
     weeks:[['第1周','盘点 SKU 类目与主图/详情页风格基线'],['第2周','训练品牌风格 LoRA + 提示词库'],['第3-4周','搭出图编排:SKU→文案→配图→质检'],['第5周','多平台尺寸适配 + 批量测试'],['第6周','人工审核流程 + 出图看板交付']]},
   cs:{icon:'🎧',name:'客服',type:'降本',bench:'按行业基准:AI 自动处理 45%(2026 现实 20–30%、标杆 60%+ 的稳健取值)。',
     params:[{id:'cs_n',label:'团队人数',u:'人'},{id:'cs_sal',label:'人均月薪',u:'元'},{id:'cs_vol',label:'月对话量',u:'次'}],
     coef:{auto:45},
-    deploy:'接入对话平台 / 自建 RAG 知识库 + 转人工兜底',model:'通义晓蜜 / 自建(qwen + 向量检索)',unit:'次',price:0.012,build:[20000,40000],
+    deploy:'接入对话平台 / 自建 RAG 知识库 + 转人工兜底',unit:'次',build:[20000,40000],
     weeks:[['第1周','导出高频工单 Top50,梳理标准应答'],['第2周','建商品/售后知识库 + 向量检索'],['第3-4周','搭多轮对话 Agent + 转人工规则'],['第5周','灰度上线,先接简单咨询跑准确率'],['第6周','逐步提自动接待比例 + 看板交付']]},
   sale:{icon:'📈',name:'销售 / 运营',type:'增收',bench:'按行业基准:AI 辅助带来约 12% 营收增量(2026 区间 8–15%)。',
     params:[{id:'sale_rev',label:'月均营收',u:'万'},{id:'sale_margin',label:'毛利率',u:'%',ph:'20-30'},{id:'sale_vol',label:'月生成内容',u:'条'}],
     coef:{up:12},
-    deploy:'AI 文案/选品/客户跟进工具 + CRM 集成',model:'大模型 + 数据分析 + CRM 接口',unit:'条',price:0.006,build:[15000,30000],
+    deploy:'AI 文案/选品/客户跟进工具 + CRM 集成',unit:'条',build:[15000,30000],
     weeks:[['第1周','梳理高转化话术、爆品规律、客户分层'],['第2周','搭 AI 文案/选品助手'],['第3-4周','客户跟进提醒 + 智能推荐接 CRM'],['第5周','运营试用,收集转化反馈'],['第6周','规模化 + 效果看板,绑定激励']]},
   kb:{icon:'📚',name:'内部知识库',type:'降本',bench:'按行业基准:AI 问答每次省约 6 分钟查阅时间。',
     params:[{id:'kb_n',label:'覆盖员工',u:'人'},{id:'kb_sal',label:'人均月薪',u:'元'},{id:'kb_q',label:'日均查询/人',u:'次',ph:'3-8'}],
     coef:{save:6},
-    deploy:'企业知识库 RAG(文档/SOP/制度向量化)+ 问答入口',model:'qwen / DeepSeek + 向量库',unit:'次查询',price:0.01,build:[15000,30000],
+    deploy:'企业知识库 RAG(文档/SOP/制度向量化)+ 问答入口',unit:'次查询',build:[15000,30000],
     weeks:[['第1周','盘点制度/SOP/产品文档,统一格式'],['第2周','文档向量化 + 检索调优'],['第3-4周','搭问答 Agent + 权限/引用溯源'],['第5周','灰度试用,补全高频问题'],['第6周','接入飞书/企微入口,全员上线']]},
   hr:{icon:'👥',name:'HR / 人事',type:'降本',bench:'按行业基准:AI 简历初筛+答疑可省约 40% HR 事务人力。',
     params:[{id:'hr_n',label:'HR人数',u:'人'},{id:'hr_sal',label:'人均月薪',u:'元'},{id:'hr_vol',label:'月简历/事务',u:'件'}],
     coef:{save:40},
-    deploy:'AI 简历筛选 + 政策问答机器人 + 事务自动化',model:'qwen / DeepSeek + 规则引擎',unit:'件',price:0.01,build:[10000,25000],
+    deploy:'AI 简历筛选 + 政策问答机器人 + 事务自动化',unit:'件',build:[10000,25000],
     weeks:[['第1周','梳理招聘流程、高频 HR 问答、事务清单'],['第2周','搭简历评分模型 + HR 政策知识库'],['第3-4周','答疑机器人 + 事务流程自动化'],['第5周','试用,校准简历评分准确率'],['第6周','接入 OA/HR 系统,交付培训']]}
 };
+
+/* 模型档位定义 —— 每个方向 3 档:轻量 / 标准 / 高端 */
+const TIERS={
+  vis:[
+    {label:'轻量',model:'即梦 / 万相 Lite',price:0.05,note:'国产图生成,批量商品图'},
+    {label:'标准',model:'通义万相 / 即梦',price:0.10,note:'主流国产图模型,2026基准'},
+    {label:'高端',model:'Midjourney / Flux Pro',price:0.35,note:'海外顶级,创意大图'}
+  ],
+  cs:[
+    {label:'轻量',model:'DeepSeek-V3 / Qwen-Turbo',price:0.004,note:'简单问答、FAQ 场景'},
+    {label:'标准',model:'Qwen-Plus / 豆包',price:0.012,note:'多轮对话、RAG检索,2026基准'},
+    {label:'高端',model:'GPT-4o / Claude 3.5',price:0.08,note:'复杂客诉、高价值客户'}
+  ],
+  sale:[
+    {label:'轻量',model:'DeepSeek-V3 / Qwen-Turbo',price:0.002,note:'批量文案、简单选品'},
+    {label:'标准',model:'通义 / 豆包',price:0.006,note:'营销内容生成,2026基准'},
+    {label:'高端',model:'GPT-4o / Claude 3.5',price:0.04,note:'高质量长文案、策略报告'}
+  ],
+  kb:[
+    {label:'轻量',model:'DeepSeek-V3 / Qwen-Turbo',price:0.003,note:'简单 FAQ、政策查询'},
+    {label:'标准',model:'Qwen-Plus / DeepSeek',price:0.01,note:'RAG 多跳检索,2026基准'},
+    {label:'高端',model:'GPT-4o / Claude 3.5',price:0.05,note:'复杂推理、跨文档分析'}
+  ],
+  hr:[
+    {label:'轻量',model:'DeepSeek-V3 / Qwen-Turbo',price:0.003,note:'简历初筛、标准问答'},
+    {label:'标准',model:'Qwen-Plus / DeepSeek',price:0.01,note:'综合事务处理,2026基准'},
+    {label:'高端',model:'GPT-4o / Claude 3.5',price:0.05,note:'高管招聘、复杂 HR 决策'}
+  ]
+};
+
 const ORDER=['vis','cs','sale','kb','hr'];
 let active={vis:true,cs:true,sale:true,kb:true,hr:true};
 
@@ -218,20 +264,97 @@ function money(n){if(n==null||isNaN(n))return null;if(Math.abs(n)>=10000)return 
 function num(n){if(n==null||isNaN(n))return null;return Math.round(n).toLocaleString();}
 const TODO='<span class="todo">待补充</span>';
 
+/* ── 模型/价格读取 ── */
+function getPrice(k){
+  const e=document.getElementById(k+'_price');
+  if(!e)return TIERS[k][1].price;
+  const v=parseFloat(e.value);
+  return (isNaN(v)||v<=0)?TIERS[k][1].price:v;
+}
+function getModelName(k){
+  const e=document.getElementById(k+'_model_nm');
+  return e?e.textContent:TIERS[k][1].model;
+}
+
+/* 点档位按钮 */
+function setTier(k,price,model,btn){
+  btn.closest('.tier-row').querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById(k+'_price').value=price;
+  document.getElementById(k+'_model_nm').textContent=model;
+  updateApiPreview(k);
+}
+
+/* 手动改价格输入框时取消档位高亮 */
+function onPriceInput(k){
+  const priceEl=document.getElementById(k+'_price');
+  const v=parseFloat(priceEl.value);
+  const tier=TIERS[k].find(t=>Math.abs(t.price-v)<0.0001);
+  const row=priceEl.closest('.tier-row');
+  row.querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('sel'));
+  if(tier){
+    // 如果恰好等于某个档位,重新选中该档位
+    row.querySelectorAll('.tier-btn').forEach(b=>{
+      if(parseFloat(b.dataset.price)===tier.price)b.classList.add('sel');
+    });
+    document.getElementById(k+'_model_nm').textContent=tier.model;
+  }else{
+    document.getElementById(k+'_model_nm').textContent='自定义单价';
+  }
+  updateApiPreview(k);
+}
+
+/* 实时预估公式 */
+function updateApiPreview(k){
+  const s=SC[k];
+  const price=getPrice(k);
+  let vol=null;
+  if(k==='kb'){const n=val('kb_n'),q=val('kb_q');vol=(n!=null&&q!=null)?n*q*22:null;}
+  else{
+    const vmap={vis:'vis_vol',cs:'cs_vol',sale:'sale_vol',hr:'hr_vol'};
+    vol=val(vmap[k]);
+  }
+  const el=document.getElementById(k+'_api_live');
+  if(!el)return;
+  if(vol===null){
+    el.innerHTML=`<span style="color:var(--faint)">填写业务量后自动预估月 API 成本</span>`;
+  }else{
+    const cost=vol*price;
+    el.innerHTML=`${num(vol)} ${s.unit} &times; ${price} 元 = <strong>${money(cost)} 元 / 月</strong>`;
+  }
+}
+
 function syncDirs(){
   document.querySelectorAll('#dir_list input').forEach(cb=>{active[cb.dataset.k]=cb.checked;cb.closest('.dir').classList.toggle('on',cb.checked);});
   renderParams();
   document.getElementById('genBtn').disabled=!ORDER.some(k=>active[k]);
 }
+
 function renderParams(){
   const box=document.getElementById('param_cards');
   const act=ORDER.filter(k=>active[k]);
   if(act.length===0){box.innerHTML='<div class="empty-hint">请在左侧至少勾选一个赋能方向</div>';return;}
-  box.innerHTML=act.map(k=>{const s=SC[k];return `<div class="pcard">
-    <div class="pcard-h"><span class="pi">${s.icon}</span><span class="pn">${s.name}</span><span class="pt">${s.type}</span></div>
-    <div class="pb">${s.bench}</div>
-    <div class="pgrid">${s.params.map(p=>`<div class="pfld"><label>${p.label}</label><div class="row"><input id="${p.id}" type="number" placeholder="${p.ph||'选填'}"><span class="u">${p.u}</span></div></div>`).join('')}</div>
-  </div>`;}).join('');
+  box.innerHTML=act.map(k=>{
+    const s=SC[k];
+    const tiers=TIERS[k];
+    const defT=tiers[1]; // 默认"标准"档
+    const tierBtns=tiers.map((t,i)=>`<button class="tier-btn${i===1?' sel':''}" data-price="${t.price}" title="${t.note}" onclick="setTier('${k}',${t.price},'${t.model}',this)">${t.label}<span class="tprice">${t.price}元</span></button>`).join('');
+    const fields=s.params.map(p=>`<div class="pfld"><label>${p.label}</label><div class="row"><input id="${p.id}" type="number" placeholder="${p.ph||'选填'}" oninput="updateApiPreview('${k}')"><span class="u">${p.u}</span></div></div>`).join('');
+    return `<div class="pcard">
+      <div class="pcard-h"><span class="pi">${s.icon}</span><span class="pn">${s.name}</span><span class="pt">${s.type}</span></div>
+      <div class="pb">${s.bench}</div>
+      <div class="pgrid">${fields}</div>
+      <div class="api-box">
+        <div class="api-box-lbl">模型选型 &amp; API 单价</div>
+        <div class="tier-row">
+          ${tierBtns}
+          <div class="price-custom">自填&nbsp;<input id="${k}_price" type="number" value="${defT.price}" step="0.001" min="0.001" class="price-input" oninput="onPriceInput('${k}')">&nbsp;元/${s.unit}</div>
+        </div>
+        <div class="api-model-nm" id="${k}_model_nm">${defT.model}</div>
+        <div class="api-live" id="${k}_api_live"><span style="color:var(--faint)">填写业务量后自动预估月 API 成本</span></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function compute(){
@@ -241,23 +364,25 @@ function compute(){
     const s=SC[k],c=s.coef;
     const complete=s.params.every(p=>val(p.id)!==null);
     let value=null,people=null,vol=null,api=null,extraRev=null,capFrom=null,capTo=null,capExtra=null;
+    let price=TIERS[k][1].price,modelName=TIERS[k][1].model; // 默认值
     if(complete){
-      if(k==='vis'){const n=val('vis_n'),sal=val('vis_sal');vol=val('vis_vol');people=n*(1-1/c.boost);value=people*sal*1.3;api=vol*s.price;capFrom=vol;capTo=Math.round(vol*c.boost);capExtra=Math.round(vol*(c.boost-1));}
-      if(k==='cs'){const n=val('cs_n'),sal=val('cs_sal');vol=val('cs_vol');people=n*(c.auto/100)*0.7;value=people*sal*1.3;api=vol*s.price;}
-      if(k==='sale'){const rev=val('sale_rev')*10000,m=val('sale_margin')/100;vol=val('sale_vol');extraRev=rev*(c.up/100);value=extraRev*m;api=vol*s.price;}
-      if(k==='kb'){const n=val('kb_n'),sal=val('kb_sal'),q=val('kb_q');const hourly=sal/22/8;vol=n*q*22;value=vol*(c.save/60)*hourly;api=vol*s.price;people=value/(sal*1.3);}
-      if(k==='hr'){const n=val('hr_n'),sal=val('hr_sal');vol=val('hr_vol');people=n*(c.save/100);value=people*sal*1.3;api=vol*s.price;}
+      price=getPrice(k);
+      modelName=getModelName(k);
+      if(k==='vis'){const n=val('vis_n'),sal=val('vis_sal');vol=val('vis_vol');people=n*(1-1/c.boost);value=people*sal*1.3;api=vol*price;capFrom=vol;capTo=Math.round(vol*c.boost);capExtra=Math.round(vol*(c.boost-1));}
+      if(k==='cs'){const n=val('cs_n'),sal=val('cs_sal');vol=val('cs_vol');people=n*(c.auto/100)*0.7;value=people*sal*1.3;api=vol*price;}
+      if(k==='sale'){const rev=val('sale_rev')*10000,m=val('sale_margin')/100;vol=val('sale_vol');extraRev=rev*(c.up/100);value=extraRev*m;api=vol*price;}
+      if(k==='kb'){const n=val('kb_n'),sal=val('kb_sal'),q=val('kb_q');const hourly=sal/22/8;vol=n*q*22;value=vol*(c.save/60)*hourly;api=vol*price;people=value/(sal*1.3);}
+      if(k==='hr'){const n=val('hr_n'),sal=val('hr_sal');vol=val('hr_vol');people=n*(c.save/100);value=people*sal*1.3;api=vol*price;}
       r.totalMonth+=value;r.totalPeople+=(people||0);r.build+=s.build[0]+s.build[1];r.api+=api;r.extraRevTotal+=(extraRev||0);r.completeCount++;
     }else{r.incomplete.push(s.name);}
-    r.teams.push({k,s,complete,value,people,vol,api,extraRev,capFrom,capTo,capExtra,build:s.build[0]+s.build[1]});
+    r.teams.push({k,s,complete,value,people,vol,api,extraRev,capFrom,capTo,capExtra,build:s.build[0]+s.build[1],price,modelName});
   });
   const cc=r.completeCount;
   if(cc>0){
     /* ===== 投入侧:自建 vs 外包 ===== */
-    /* 团队规模随方向数缩放:小场景轻配,多场景重配 */
     const eng=cc>=4?2:1;
-    const pmN=cc>=3?1:0.5;                 // 1-2 个场景:产品经理可兼职/半投入
-    const dataN=(active.kb||active.cs||active.hr)?1:0.5; // 知识/数据密集场景才需全职数据工程
+    const pmN=cc>=3?1:0.5;
+    const dataN=(active.kb||active.cs||active.hr)?1:0.5;
     const buildMonths=Math.min(6,2+Math.ceil(cc/2));
     const visIn=r.teams.some(t=>t.k==='vis'&&t.complete);
     const teamRows=[
@@ -268,7 +393,7 @@ function compute(){
     if(visIn)teamRows.push({role:'设计 / 视觉',n:1,disp:'1 人',sal:10000});
     const teamMonthly=teamRows.reduce((a,x)=>a+x.n*x.sal,0);
     const selfBuildCost=teamMonthly*buildMonths;
-    const selfOpsHR=cc<=1?15000:(cc<=3?25000:40000); // 运维人力随方向数缩放
+    const selfOpsHR=cc<=1?15000:(cc<=3?25000:40000);
     const selfFirstYear=selfBuildCost+selfOpsHR*(12-buildMonths)+r.api*12;
     const selfNet=r.totalMonth-selfOpsHR-r.api;
     const selfPay=selfNet>0?Math.ceil(selfBuildCost/selfNet):99;
@@ -331,7 +456,7 @@ function generate(){
       <tr><th>自建成本项</th><th class="r">金额</th></tr>
       <tr><td>建设期人力(${s.buildMonths} 个月 × ${money(s.teamMonthly)})</td><td class="r">${money(s.selfBuildCost)} 元</td></tr>
       <tr><td>上线后运维人力(约 ${money(s.selfOpsHR)}/月)</td><td class="r">${money(s.selfOpsHR*(12-s.buildMonths))} 元/首年</td></tr>
-      <tr><td>API / Token(全年)</td><td class="r">${money(r.api*12)} 元</td></tr>
+      <tr><td>API / Token 成本(全年)</td><td class="r">${money(r.api*12)} 元</td></tr>
       <tr class="sum"><td>自建首年总投入</td><td class="r">${money(s.selfFirstYear)} 元</td></tr>
     </table>
     <h3>4.2 外包路线:项目报价 + 托管</h3>
@@ -362,6 +487,16 @@ function generate(){
   }else{
     investHTML=`<p>补全各方向参数后,此处将给出自建团队(研发人力成本)与外包(项目报价 + 托管)两条路线的完整投入测算与对比。</p>`;
   }
+
+  // 章节 05 战略架构 —— 逐方向展示模型 + API 明细
+  const archCards=r.teams.map(t=>`<div class="arch">
+    <div class="ah">${t.s.icon} ${t.s.name} · ${t.s.type}</div>
+    <div class="ar"><span class="ak">部署方式</span><span class="av">${t.s.deploy}</span></div>
+    <div class="ar"><span class="ak">选用模型</span><span class="av">${t.complete?t.modelName:'—'}</span></div>
+    <div class="ar"><span class="ak">月业务量</span><span class="av"><span class="mono">${t.complete?num(t.vol)+' '+t.s.unit:'待补充'}</span></span></div>
+    <div class="ar"><span class="ak">API 单价</span><span class="av">${t.complete?'<span class="mono">'+t.price+' 元 / '+t.s.unit+'</span>':TODO}</span></div>
+    <div class="ar"><span class="ak">月 API 成本</span><span class="av">${t.complete?'<span class="mono">'+num(t.vol)+' × '+t.price+' = '+money(t.api)+' 元</span>':TODO}</span></div>
+  </div>`).join('');
 
   const html=`
   ${incBanner}
@@ -421,14 +556,9 @@ function generate(){
 
   <div class="rep-sec">
     <h2><span class="sn">05</span>AI 赋能战略架构方案</h2>
-    <p>按"先做透高频场景、再横向扩展"的原则,各环节部署方案与技术选型如下:</p>
-    ${r.teams.map(t=>`<div class="arch">
-      <div class="ah">${t.s.icon} ${t.s.name} · ${t.s.type}</div>
-      <div class="ar"><span class="ak">部署方式</span><span class="av">${t.s.deploy}</span></div>
-      <div class="ar"><span class="ak">技术选型</span><span class="av">${t.s.model}</span></div>
-      <div class="ar"><span class="ak">月业务量</span><span class="av"><span class="mono">${t.complete?num(t.vol)+' '+t.s.unit:'待补充'}</span></span></div>
-      <div class="ar"><span class="ak">月 API 成本</span><span class="av">${t.complete?'<span class="mono">'+num(t.vol)+' × '+t.s.price+' = '+money(t.api)+' 元</span>':TODO}</span></div>
-    </div>`).join('')}
+    <p>按"先做透高频场景、再横向扩展"的原则,各环节部署方案、模型选型与 API 成本明细如下:</p>
+    ${archCards}
+    ${cc?`<p style="font-size:12px;color:var(--faint)">月 API 合计:${money(r.api)} 元/月(年化 ${money(r.api*12)} 元)。API 单价基于所选模型档位,不同模型价差可达 10–50 倍,实际应以部署后账单为准;架构上不绑死单一模型,可按效果与成本随时切换 DeepSeek / 豆包 / 通义 / GPT-4o。</p>`:''}
   </div>
 
   <div class="rep-sec">
@@ -478,7 +608,7 @@ function generate(){
 
   <div class="foot">
     本报告由 AI 赋能商业计划生成器输出 · ${docNo} · ${dateStr}<br>
-    收益系数、人力薪资基于 2026 公开行业基准估算,未填项标「待补充」,实际结果取决于落地执行,不构成投资承诺。
+    收益系数、人力薪资基于 2026 公开行业基准估算;API 单价基于所选模型档位估算,不同模型价差显著,以实际部署账单为准。未填项标「待补充」,实际结果取决于落地执行,不构成投资承诺。
   </div>`;
 
   document.getElementById('report_doc').innerHTML=html;
@@ -486,6 +616,7 @@ function generate(){
   document.getElementById('report').style.display='block';
   window.scrollTo({top:0});
 }
+
 function exportPDF(){
   const doc=document.getElementById('report_doc');
   const name=document.getElementById('co_name').value.trim()||'某某品牌';
