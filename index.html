@@ -412,9 +412,9 @@ function compute(){
     const buildMonths=Math.min(6,2+Math.ceil(cc/2));
     const visIn=r.teams.some(t=>t.k==='vis'&&t.complete);
     const teamRows=[
-      {role:'AI 产品经理',n:pmN,disp:pmN<1?'0.5 人':'1 人',sal:30000},
+      {role:'AI 产品经理',n:pmN,disp:pmN<1?'1 人（兼任）':'1 人',sal:30000},
       {role:'AI 应用工程师',n:eng,disp:eng+' 人',sal:28000},
-      {role:'数据 / 知识工程',n:dataN,disp:dataN<1?'0.5 人':'1 人',sal:15000}
+      {role:'数据 / 知识工程',n:dataN,disp:dataN<1?'1 人（兼任）':'1 人',sal:15000}
     ];
     if(visIn)teamRows.push({role:'设计 / 视觉',n:1,disp:'1 人',sal:10000});
     const teamMonthly=teamRows.reduce((a,x)=>a+x.n*x.sal,0);
