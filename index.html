@@ -258,6 +258,7 @@ const TIERS={
 
 const ORDER=['vis','cs','sale','kb','hr'];
 let active={vis:true,cs:true,sale:true,kb:true,hr:true};
+const INPUT_STATE={}; // 跨渲染保留用户填写的数据
 
 function val(id){const e=document.getElementById(id);if(!e)return null;const s=(''+e.value).trim();if(s==='')return null;const v=parseFloat(s);return isNaN(v)?null:v;}
 function money(n){if(n==null||isNaN(n))return null;if(Math.abs(n)>=10000)return (n/10000).toFixed(1)+'万';return Math.round(n).toLocaleString();}
@@ -324,9 +325,34 @@ function updateApiPreview(k){
   }
 }
 
+/* ── 切换方向时保留已填数据 ── */
+function saveInputState(){
+  ORDER.forEach(k=>{
+    if(!INPUT_STATE[k])INPUT_STATE[k]={};
+    SC[k].params.forEach(p=>{const e=document.getElementById(p.id);if(e)INPUT_STATE[k][p.id]=e.value;});
+    const pe=document.getElementById(k+'_price');if(pe)INPUT_STATE[k].price=pe.value;
+    const me=document.getElementById(k+'_model_nm');if(me)INPUT_STATE[k].modelName=me.textContent;
+  });
+}
+function restoreInputState(){
+  ORDER.forEach(k=>{
+    const st=INPUT_STATE[k];if(!st)return;
+    SC[k].params.forEach(p=>{const e=document.getElementById(p.id);if(e&&st[p.id]!==undefined)e.value=st[p.id];});
+    const pe=document.getElementById(k+'_price');
+    if(pe&&st.price!==undefined){
+      pe.value=st.price;
+      const v=parseFloat(st.price);
+      pe.closest('.tier-row').querySelectorAll('.tier-btn').forEach(b=>b.classList.toggle('sel',parseFloat(b.dataset.price)===v));
+    }
+    const me=document.getElementById(k+'_model_nm');if(me&&st.modelName)me.textContent=st.modelName;
+    updateApiPreview(k);
+  });
+}
 function syncDirs(){
+  saveInputState();
   document.querySelectorAll('#dir_list input').forEach(cb=>{active[cb.dataset.k]=cb.checked;cb.closest('.dir').classList.toggle('on',cb.checked);});
   renderParams();
+  restoreInputState();
   document.getElementById('genBtn').disabled=!ORDER.some(k=>active[k]);
 }
 
